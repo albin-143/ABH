@@ -26,7 +26,12 @@ jobs:
           unzip -q ABH-Downloader-Android-Project.zip -d source
           ls source/ABHDownloader
 
-      - name: Install Android SDK
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           yes | sdkmanager --licenses || true
