@@ -1,0 +1,51 @@
+
+name: Build ABH Downloader APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get source
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Extract project ZIP
+        run: |
+          unzip -q ABH-Downloader-Android-Project.zip -d source
+          ls source/ABHDownloader
+
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install Gradle
+        run: |
+          curl -L https://services.gradle.org/distributions/gradle-8.9-bin.zip -o gradle.zip
+          unzip -q gradle.zip
+          echo "$PWD/gradle-8.9/bin" >> $GITHUB_PATH
+
+      - name: Build APK
+        run: |
+          cd source/ABHDownloader
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ABH-Downloader-APK
+          path: source/ABHDownloader/app/build/outputs/apk/debug/app-debug.apk
