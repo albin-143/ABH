@@ -1,84 +1,42 @@
-
-name: Build ABH Downloader APK
+name: Build ABH Downloader V2
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Extract V2 Source
+        run: |
+          unzip -o ABH-Downloader-v2-Source.zip -d abh-source
+
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        run: |
-          SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f | head -n 1)
-          yes | "$SDKMANAGER" --licenses || true
-          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+      - uses: android-actions/setup-android@v3
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Install SDK
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME" -name sdkmanager | head -n 1)"
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Extract Project
-        run: |
-          unzip -q ABH-Downloader-Android-Project.zip -d source
-          ls source/ABHDownloader
-          
-      - name: Fix MainActivity
-        run: |
-          sed -i 's/singleLine = true/setSingleLine(true)/' source/ABHDownloader/app/src/main/java/com/abh/downloader/MainActivity.kt
-
-      - name: Fix Kotlin Java compatibility
-        run: |
-          cat > source/ABHDownloader/app/build.gradle.kts <<'EOF'
-          plugins {
-              id("com.android.application")
-              id("org.jetbrains.kotlin.android")
-          }
-
-          android {
-              namespace = "com.abh.downloader"
-              compileSdk = 35
-
-              defaultConfig {
-                  applicationId = "com.abh.downloader"
-                  minSdk = 23
-                  targetSdk = 35
-                  versionCode = 1
-                  versionName = "1.0"
-              }
-
-              compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
-              }
-
-              kotlinOptions {
-                  jvmTarget = "17"
-              }
-          }
-          EOF
-
       - name: Build APK
-        run: |
-          cd source/ABHDownloader
-          gradle assembleDebug
+        run: gradle -p abh-source assembleDebug
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: ABH-Downloader-APK
-          path: source/ABHDownloader/app/build/outputs/apk/debug/app-debug.apk
+          name: ABH-Downloader-APK-v2
+          path: abh-source/app/build/outputs/apk/debug/app-debug.apk
