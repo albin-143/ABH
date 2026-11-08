@@ -3,39 +3,44 @@ name: Build ABH Downloader V2
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Extract V2 Source
-        run: |
-          unzip -o ABH-Downloader-v2-Source.zip -d abh-source
+        run: unzip -o ABH-Downloader-v2-Source.zip -d abh-source
 
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      - name: Setup Android
+        uses: android-actions/setup-android@v3
 
-            - name: Install SDK
+      - name: Install SDK
         run: |
-          yes | sdkmanager --licenses
+          sdkmanager --licenses
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
       - name: Build APK
         run: gradle -p abh-source assembleDebug
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: ABH-Downloader-APK-v2
           path: abh-source/app/build/outputs/apk/debug/app-debug.apk
