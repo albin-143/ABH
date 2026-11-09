@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract V2 Source
-        run: unzip -o ABH-Downloader-v2-Source-Fixed.zip -d abh-source
+        run: unzip -o ABH-Downloader-v3-Download-Quality.zip -d abh-source
 
       - name: Setup Java
         uses: actions/setup-java@v4
